@@ -8,6 +8,8 @@ echo "🚀 Starting iOS build process..."
 echo "🧹 Cleaning previous builds..."
 flutter clean
 rm -rf ios/Pods ios/Podfile.lock ios/.symlinks
+rm -rf ios/Flutter/Flutter.framework
+rm -rf ios/Flutter/Flutter.podspec
 
 # Get dependencies
 echo "📦 Getting Flutter dependencies..."
@@ -19,16 +21,32 @@ cd ios
 pod install --repo-update --verbose
 cd ..
 
-# Build iOS app
+# Build iOS app with minimal configuration
 echo "🔨 Building iOS app..."
-flutter build ios --release --no-codesign --verbose
+flutter build ios \
+  --release \
+  --no-codesign \
+  --verbose \
+  --build-number=1 \
+  --build-name=1.0.0
+
+# Alternative build approach if the above fails
+if [ ! -d "build/ios/iphoneos/Runner.app" ]; then
+    echo "⚠️  First build approach failed, trying alternative..."
+    flutter build ios --release --no-codesign --verbose
+fi
 
 # Verify build output
 echo "✅ Verifying build output..."
 if [ -d "build/ios/iphoneos/Runner.app" ]; then
     echo "✅ Runner.app found successfully"
+    ls -la build/ios/iphoneos/
 else
     echo "❌ Runner.app not found"
+    echo "Checking build directory contents:"
+    ls -la build/ios/iphoneos/ || echo "Build directory doesn't exist"
+    echo "Checking all build directories:"
+    find build -name "*.app" -type d 2>/dev/null || echo "No .app directories found"
     exit 1
 fi
 

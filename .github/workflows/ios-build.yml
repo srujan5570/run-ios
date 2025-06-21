@@ -28,6 +28,18 @@ jobs:
           channel: 'stable'
           architecture: x64
           
+      - name: Show Flutter version
+        run: flutter --version
+
+      - name: Show iOS build environment
+        run: |
+          echo "Xcode version:"
+          xcodebuild -version
+          echo "iOS SDKs available:"
+          xcodebuild -showsdks | grep iOS
+          echo "Available simulators:"
+          xcrun simctl list devices
+
       - name: Make build script executable
         run: chmod +x scripts/build_ios.sh
 
