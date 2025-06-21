@@ -28,22 +28,35 @@ jobs:
           channel: 'stable'
           architecture: x64
           
-      - run: flutter pub get
+      - name: Flutter pub get
+        run: flutter pub get
 
-      - run: pod repo update
-        working-directory: ios
+      - name: Setup iOS build environment
+        run: |
+          cd ios
+          flutter build ios --no-codesign --debug
+          cd ..
 
-      - run: flutter build ios --release --no-codesign
+      - name: Install iOS dependencies
+        run: |
+          cd ios
+          pod install --repo-update
+          cd ..
 
-      - run: mkdir Payload
-        working-directory: build/ios/iphoneos
+      - name: Build iOS app
+        run: flutter build ios --release --no-codesign
 
-      - run: mv Runner.app/ Payload
-        working-directory: build/ios/iphoneos
+      - name: Create Payload directory
+        run: mkdir -p build/ios/iphoneos/Payload
 
-      - name: Zip output
-        run: zip -qq -r -9 FlutterIpaExport.ipa Payload
-        working-directory: build/ios/iphoneos
+      - name: Move app to Payload
+        run: mv build/ios/iphoneos/Runner.app build/ios/iphoneos/Payload/
+
+      - name: Create IPA file
+        run: |
+          cd build/ios/iphoneos
+          zip -qq -r -9 FlutterIpaExport.ipa Payload
+          cd ../../..
 
       - name: Create Release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
