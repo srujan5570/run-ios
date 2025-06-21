@@ -28,30 +28,11 @@ jobs:
           channel: 'stable'
           architecture: x64
           
-      - name: Flutter pub get
-        run: flutter pub get
+      - name: Make build script executable
+        run: chmod +x scripts/build_ios.sh
 
-      - name: Install iOS dependencies
-        run: |
-          cd ios
-          pod install --repo-update
-          cd ..
-
-      - name: Build iOS app for device
-        run: |
-          flutter build ios --release --no-codesign --dart-define=FLUTTER_BUILD_NUMBER=${{ steps.version.outputs.version }}
-
-      - name: Create Payload directory
-        run: mkdir -p build/ios/iphoneos/Payload
-
-      - name: Move app to Payload
-        run: mv build/ios/iphoneos/Runner.app build/ios/iphoneos/Payload/
-
-      - name: Create IPA file
-        run: |
-          cd build/ios/iphoneos
-          zip -qq -r -9 FlutterIpaExport.ipa Payload
-          cd ../../..
+      - name: Build iOS app using script
+        run: ./scripts/build_ios.sh
 
       - name: Create Release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -71,6 +52,12 @@ jobs:
             
             ### Installation
             Download the IPA file and install on your iOS device.
+            
+            ### Build Info
+            - Platform: iOS 12.0+
+            - Build Date: ${{ github.event.head_commit.timestamp }}
+            - Commit: ${{ github.sha }}
+            - Built on: GitHub Actions (macOS)
           draft: false
           prerelease: false
 
