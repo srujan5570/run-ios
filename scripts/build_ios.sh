@@ -21,19 +21,42 @@ cd ios
 pod install --repo-update --verbose
 cd ..
 
-# Build iOS app with minimal configuration
-echo "🔨 Building iOS app..."
-flutter build ios \
-  --release \
-  --no-codesign \
-  --verbose \
-  --build-number=1 \
-  --build-name=1.0.0
+# Check available destinations
+echo "🔍 Checking available build destinations..."
+flutter devices
 
-# Alternative build approach if the above fails
-if [ ! -d "build/ios/iphoneos/Runner.app" ]; then
-    echo "⚠️  First build approach failed, trying alternative..."
-    flutter build ios --release --no-codesign --verbose
+# Try Flutter build first
+echo "🔨 Attempting Flutter iOS build..."
+if flutter build ios --release --no-codesign --verbose; then
+    echo "✅ Flutter build successful"
+else
+    echo "⚠️  Flutter build failed, trying xcodebuild directly..."
+    
+    # Use xcodebuild directly to build for generic iOS device
+    cd ios
+    xcodebuild \
+      -workspace Runner.xcworkspace \
+      -scheme Runner \
+      -configuration Release \
+      -destination 'generic/platform=iOS' \
+      -derivedDataPath build \
+      -archivePath build/Runner.xcarchive \
+      archive \
+      CODE_SIGN_IDENTITY="" \
+      CODE_SIGNING_REQUIRED=NO \
+      CODE_SIGNING_ALLOWED=NO
+    
+    # Export the archive
+    xcodebuild \
+      -exportArchive \
+      -archivePath build/Runner.xcarchive \
+      -exportPath build/ios/iphoneos \
+      -exportOptionsPlist exportOptions.plist \
+      CODE_SIGN_IDENTITY="" \
+      CODE_SIGNING_REQUIRED=NO \
+      CODE_SIGNING_ALLOWED=NO
+    
+    cd ..
 fi
 
 # Verify build output
